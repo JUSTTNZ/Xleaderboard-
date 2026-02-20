@@ -26,6 +26,24 @@ app.use('/api/votes', voteRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Root endpoint - API info
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    name: 'RankX API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      categories: '/api/categories',
+      votes: '/api/votes',
+      profile: '/api/profile',
+      dashboard: '/api/dashboard'
+    }
+  });
+});
+
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
