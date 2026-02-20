@@ -13,7 +13,7 @@ const categorySchema = new Schema<ICategory>({
   requires_approval: { type: Boolean, default: true },
 }, { timestamps: true });
 
-categorySchema.index({ slug: 1 });
+// slug already has unique:true which creates an index
 categorySchema.index({ is_active: 1 });
 
 const Category: Model<ICategory> = mongoose.model<ICategory>('Category', categorySchema);

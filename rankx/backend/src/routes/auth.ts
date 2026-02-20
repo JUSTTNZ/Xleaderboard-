@@ -38,7 +38,7 @@ router.post('/callback', async (req: Request<Record<string, never>, unknown, Cal
         followers_count: (meta.followers_count as number) || 0,
         last_login: new Date(),
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     res.json({ success: true, user: dbUser });

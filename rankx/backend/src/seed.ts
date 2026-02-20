@@ -39,7 +39,7 @@ async function seed(): Promise<void> {
       await Category.findOneAndUpdate(
         { slug: cat.slug },
         { ...cat, is_active: true, requires_approval: true },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       console.log(`Seeded: ${cat.name}`);
     }
