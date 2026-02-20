@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { analytics } from '@vercel/analytics/server';
 import connectDB from './config/db';
 
 import authRoutes from './routes/auth';
@@ -18,6 +19,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(analytics());
 
 // Routes
 app.use('/api/auth', authRoutes);

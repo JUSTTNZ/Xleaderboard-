@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './hooks/useAuth';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="/auth/callback" element={<AuthCallback />} />
             </Routes>
           </main>
+          <Analytics />
         </div>
       </AuthProvider>
     </BrowserRouter>
