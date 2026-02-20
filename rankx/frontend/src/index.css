@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  
+
   /* Color Palette - SubWise Monochrome */
   --color-bg-primary: #0A0A0A;
   --color-bg-secondary: #1A1A1A;
@@ -40,33 +40,98 @@ body {
   scrollbar-color: #333333 transparent;
 }
 
-/* Hero Section Starfield Background */
+/* ============================
+   ANIMATED STARFIELD
+   ============================ */
 .hero-starfield {
   position: relative;
-  background-image: 
-    radial-gradient(1px 1px at 20px 30px, white, rgba(255, 255, 255, 0.2)),
-    radial-gradient(1px 1px at 60px 70px, white, rgba(255, 255, 255, 0.15)),
-    radial-gradient(1px 1px at 50px 50px, white, rgba(255, 255, 255, 0.1)),
-    radial-gradient(2px 2px at 130px 80px, white, rgba(255, 255, 255, 0.2)),
-    radial-gradient(2px 2px at 90px 10px, white, rgba(255, 255, 255, 0.1)),
-    radial-gradient(1px 1px at 130px 130px, white, rgba(255, 255, 255, 0.2)),
-    radial-gradient(1px 1px at 70px 100px, white, rgba(255, 255, 255, 0.15));
-  background-repeat: repeat;
-  background-size: 200px 200px;
-  background-position: 0 0;
+  overflow: hidden;
 }
 
-/* Typography Utilities */
+.hero-starfield::before,
+.hero-starfield::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 60px 70px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 110px 45px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 150px 120px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 180px 150px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 70px 100px, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 200px 30px, rgba(255, 255, 255, 0.4), transparent);
+  background-repeat: repeat;
+  background-size: 220px 180px;
+  pointer-events: none;
+}
+
+.hero-starfield::before {
+  animation: starfield-drift 80s linear infinite;
+}
+
+.hero-starfield::after {
+  background-image:
+    radial-gradient(1px 1px at 40px 60px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 90px 10px, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 160px 90px, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 30px 140px, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(2px 2px at 120px 50px, rgba(255, 255, 255, 0.2), transparent);
+  background-size: 300px 250px;
+  animation: starfield-drift-reverse 120s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes starfield-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-180px); }
+}
+
+@keyframes starfield-drift-reverse {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-100px, -125px); }
+}
+
+/* Starfield twinkle overlay */
+.hero-starfield-twinkle {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 50px 50px, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 180px 120px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 100px 180px, rgba(255, 255, 255, 0.7), transparent);
+  background-repeat: repeat;
+  background-size: 250px 250px;
+  animation: twinkle 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+  100% { opacity: 0.3; }
+}
+
+/* ============================
+   TYPOGRAPHY
+   ============================ */
 .text-hero-heading {
-  @apply text-6xl font-bold leading-tight;
+  @apply text-5xl font-bold leading-tight;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  letter-spacing: -0.02em;
 }
 
 .text-page-heading {
-  @apply text-5xl font-bold leading-tight;
+  @apply text-4xl font-bold leading-tight;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.02em;
 }
 
 .text-section-heading {
-  @apply text-4xl font-bold;
+  @apply text-3xl font-bold;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  letter-spacing: -0.01em;
 }
 
 .text-card-heading {
@@ -93,13 +158,24 @@ body {
   @apply text-xs text-gray-500;
 }
 
-/* Component Utilities */
+/* ============================
+   BUTTONS
+   ============================ */
 .btn-primary {
   @apply bg-white text-black px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:bg-gray-100 active:scale-95 flex items-center gap-2;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary {
-  @apply border border-gray-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-[#1A1A1A] transition-colors duration-200;
+  @apply border border-gray-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-[#1A1A1A] transition-all duration-200 flex items-center gap-2;
+}
+
+.btn-secondary:hover {
+  border-color: #555;
 }
 
 .btn-success {
@@ -118,8 +194,25 @@ body {
   @apply px-8 py-4 text-lg;
 }
 
+/* ============================
+   CARDS
+   ============================ */
 .card {
-  @apply rounded-xl border border-[#333] bg-[#1A1A1A] transition-all duration-200 hover:border-[#555];
+  @apply rounded-xl border border-[#333] bg-[#1A1A1A] transition-all duration-200;
+}
+
+.card:hover {
+  border-color: #444;
+}
+
+.card-interactive {
+  @apply rounded-xl border border-[#333] bg-[#1A1A1A] transition-all duration-200 cursor-pointer;
+}
+
+.card-interactive:hover {
+  border-color: #555;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
 }
 
 .card-padding {
@@ -130,15 +223,28 @@ body {
   @apply p-8;
 }
 
+/* ============================
+   INPUTS
+   ============================ */
 .input-base {
   @apply w-full px-4 py-3 bg-[#1A1A1A] border border-[#333] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors duration-200;
+}
+
+.search-input {
+  @apply w-full pl-11 pr-4 py-3 bg-[#1A1A1A] border border-[#333] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#555] transition-all duration-200;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#0A0A0A];
 }
 
-/* Layout Utilities */
+/* ============================
+   LAYOUT
+   ============================ */
 .container-max {
   @apply max-w-7xl;
 }
@@ -155,17 +261,118 @@ body {
   @apply pt-16;
 }
 
-/* Smooth Transitions */
+/* ============================
+   PODIUM - TOP 3
+   ============================ */
+.podium-gold {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.08) 0%, rgba(250, 204, 21, 0.02) 100%);
+  border-color: rgba(250, 204, 21, 0.25);
+}
+
+.podium-gold:hover {
+  border-color: rgba(250, 204, 21, 0.4);
+  box-shadow: 0 4px 30px rgba(250, 204, 21, 0.1);
+}
+
+.podium-silver {
+  background: linear-gradient(135deg, rgba(156, 163, 175, 0.08) 0%, rgba(156, 163, 175, 0.02) 100%);
+  border-color: rgba(156, 163, 175, 0.25);
+}
+
+.podium-silver:hover {
+  border-color: rgba(156, 163, 175, 0.4);
+  box-shadow: 0 4px 30px rgba(156, 163, 175, 0.1);
+}
+
+.podium-bronze {
+  background: linear-gradient(135deg, rgba(194, 120, 62, 0.08) 0%, rgba(194, 120, 62, 0.02) 100%);
+  border-color: rgba(194, 120, 62, 0.25);
+}
+
+.podium-bronze:hover {
+  border-color: rgba(194, 120, 62, 0.4);
+  box-shadow: 0 4px 30px rgba(194, 120, 62, 0.1);
+}
+
+/* ============================
+   GRADIENT GLOW EFFECTS
+   ============================ */
+.glow-white {
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.06);
+}
+
+.glow-subtle {
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 0 0 40px rgba(255, 255, 255, 0.03);
+}
+
+/* ============================
+   TRANSITIONS
+   ============================ */
 @layer utilities {
   .transition-fast {
     @apply transition-all duration-150 ease-in-out;
   }
-  
+
   .transition-smooth {
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
   .transition-slow {
     @apply transition-all duration-300 ease-in-out;
   }
+}
+
+/* ============================
+   FEATURE SECTION VISUALS
+   ============================ */
+.feature-visual {
+  @apply rounded-2xl border border-[#333] bg-[#111] p-8 overflow-hidden;
+  position: relative;
+}
+
+.feature-visual::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Mock chart bars for feature visuals */
+.chart-bar {
+  @apply rounded-t-sm bg-white/20;
+  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.chart-bar:hover {
+  @apply bg-white/40;
+}
+
+/* ============================
+   SCROLLBAR STYLES
+   ============================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ============================
+   SELECTION HIGHLIGHT
+   ============================ */
+::selection {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
 }

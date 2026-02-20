@@ -1,0 +1,30 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#0A0A0A"/>
+  
+  <!-- Outer circle border -->
+  <circle cx="200" cy="200" r="190" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+  
+  <!-- Inner decorative circle -->
+  <circle cx="200" cy="200" r="170" stroke="#333333" stroke-width="1" fill="none"/>
+  
+  <!-- XRank Text -->
+  <text x="200" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="96" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2">
+    XRank
+  </text>
+  
+  <!-- Subtle rank indicator (trophy-like symbol) -->
+  <g transform="translate(200, 130)">
+    <!-- Trophy outline -->
+    <path d="M -15 0 L -15 15 Q -15 25 -5 25 L 5 25 Q 15 25 15 15 L 15 0" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Cup top -->
+    <rect x="-12" y="0" width="24" height="12" rx="2" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+    <!-- Handle -->
+    <path d="M 12 3 Q 20 3 20 10 Q 20 17 12 17" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Bottom tagline -->
+  <text x="200" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#999999" text-anchor="middle" letter-spacing="1">
+    RANKING PLATFORM
+  </text>
+</svg>
