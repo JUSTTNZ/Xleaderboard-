@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Users, BarChart3, ArrowLeft, UserPlus, X, Trophy, Medal, Crown, ThumbsUp } from 'lucide-react';
+import { Users, BarChart3, ArrowLeft, UserPlus, X, Trophy, Medal, Crown, ThumbsUp, AlertTriangle, Ban, XCircle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 import { useAuth } from '../hooks/useAuth';

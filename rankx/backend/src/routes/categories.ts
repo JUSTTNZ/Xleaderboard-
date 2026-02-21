@@ -130,9 +130,123 @@ router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request
   }
 });
 
+// Helper: forfeit all existing memberships and votes in other categories
+async function forfeitExistingMemberships(userId: unknown, excludeCategoryId: unknown) {
+  const existingMemberships = await CategoryMember.find({
+    user: userId,
+    category: { $ne: excludeCategoryId },
+    status: { $in: ['approved', 'pending'] },
+  });
+
+  let totalVotesLost = 0;
+
+  for (const membership of existingMemberships) {
+    if (membership.status === 'approved') {
+      // Delete all votes this user received in that category
+      const votesReceived = await Vote.find({
+        voted_for: userId,
+        category: membership.category,
+      });
+
+      if (votesReceived.length > 0) {
+        totalVotesLost += votesReceived.length;
+        await Vote.deleteMany({
+          voted_for: userId,
+          category: membership.category,
+        });
+      }
+
+      // Also delete any vote the user CAST in that category
+      const voteCast = await Vote.findOne({
+        voter: userId,
+        category: membership.category,
+      });
+      if (voteCast) {
+        await CategoryMember.updateOne(
+          { category: membership.category, user: voteCast.voted_for },
+          { $inc: { vote_count: -1 } }
+        );
+        await User.updateOne(
+          { _id: voteCast.voted_for },
+          { $inc: { total_votes_received: -1 } }
+        );
+        await Category.updateOne(
+          { _id: membership.category },
+          { $inc: { total_votes: -1 } }
+        );
+        await Vote.deleteOne({ _id: voteCast._id });
+      }
+
+      // Update user's total_votes_received and category counters
+      if (votesReceived.length > 0) {
+        await User.updateOne(
+          { _id: userId },
+          { $inc: { total_votes_received: -votesReceived.length } }
+        );
+        await Category.updateOne(
+          { _id: membership.category },
+          { $inc: { total_votes: -votesReceived.length, member_count: -1 } }
+        );
+      } else {
+        await Category.updateOne(
+          { _id: membership.category },
+          { $inc: { member_count: -1 } }
+        );
+      }
+
+      // Recalculate rankings for the old category
+      await recalculateRankings(membership.category);
+    }
+
+    // Delete the membership record
+    await CategoryMember.deleteOne({ _id: membership._id });
+  }
+
+  return { forfeitedCount: existingMemberships.length, totalVotesLost };
+}
+
+// Helper: create or re-activate membership in a category
+async function createMembership(userId: unknown, categoryId: unknown, reason: string, isAdmin: boolean, followersCount: number) {
+  const autoApprove = isAdmin || followersCount >= 500;
+  const status = autoApprove ? 'approved' : 'pending';
+
+  // Check for rejected membership in this category (allow re-application)
+  const existingRejected = await CategoryMember.findOne({
+    category: categoryId,
+    user: userId,
+    status: 'rejected',
+  });
+
+  if (existingRejected) {
+    existingRejected.status = status;
+    existingRejected.application_reason = reason;
+    existingRejected.vote_count = 0;
+    existingRejected.current_rank = null;
+    existingRejected.previous_rank = null;
+    existingRejected.rank_change = 0;
+    existingRejected.approved_at = autoApprove ? new Date() : null;
+    await existingRejected.save();
+  } else {
+    await CategoryMember.create({
+      category: categoryId,
+      user: userId,
+      status,
+      application_reason: reason,
+      approved_at: autoApprove ? new Date() : null,
+    });
+  }
+
+  if (autoApprove) {
+    await Category.updateOne({ _id: categoryId }, { $inc: { member_count: 1 } });
+    await recalculateRankings(categoryId);
+  }
+
+  return { status, autoApprove };
+}
+
 // POST /api/categories/:slug/apply - Apply to join category
 // SINGLE-CATEGORY RULE: Users can only be in ONE category.
-// Applying to a new category forfeits all votes in the current category.
+// If user is already in another category, returns requiresConfirmation with current category info.
 // Admin (@codebynz) applications are auto-approved instantly.
 router.post('/:slug/apply', authenticate as express.RequestHandler, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -141,6 +255,15 @@ router.post('/:slug/apply', authenticate as express.RequestHandler, async (req: 
     const category = await Category.findOne({ slug: req.params.slug, is_active: true });
     if (!category) {
       res.status(404).json({ error: 'Category not found' });
+      return;
+    }
+
+    // Validate reason
+    if (!reason || reason.length < 20 || reason.length > 200) {
+      res.status(400).json({
+        success: false,
+        error: 'Reason must be between 20 and 200 characters',
+      });
       return;
     }
 
@@ -159,137 +282,124 @@ router.post('/:slug/apply', authenticate as express.RequestHandler, async (req: 
         res.status(409).json({ error: 'Application already pending' });
         return;
       }
-      // If rejected, allow re-application - will be handled below after cleanup
+      // If rejected, allow re-application below
     }
 
     // SINGLE-CATEGORY RESTRICTION:
-    // Find any existing approved/pending memberships in OTHER categories
-    const existingMemberships = await CategoryMember.find({
+    // Check if user is already in ANY other category
+    const existingMembership = await CategoryMember.findOne({
       user: authReq.user._id,
       category: { $ne: category._id },
       status: { $in: ['approved', 'pending'] },
-    });
+    }).populate('category', 'name slug');
 
-    // Forfeit all existing memberships and votes
-    for (const membership of existingMemberships) {
-      if (membership.status === 'approved') {
-        // Delete all votes this user received in that category
-        const votesReceived = await Vote.find({
-          voted_for: authReq.user._id,
-          category: membership.category,
-        });
-
-        // Decrement vote counts for each vote removed
-        if (votesReceived.length > 0) {
-          await Vote.deleteMany({
-            voted_for: authReq.user._id,
-            category: membership.category,
-          });
-        }
-
-        // Also delete any vote the user CAST in that category
-        const voteCast = await Vote.findOne({
-          voter: authReq.user._id,
-          category: membership.category,
-        });
-        if (voteCast) {
-          await CategoryMember.updateOne(
-            { category: membership.category, user: voteCast.voted_for },
-            { $inc: { vote_count: -1 } }
-          );
-          await User.updateOne(
-            { _id: voteCast.voted_for },
-            { $inc: { total_votes_received: -1 } }
-          );
-          await Category.updateOne(
-            { _id: membership.category },
-            { $inc: { total_votes: -1 } }
-          );
-          await Vote.deleteOne({ _id: voteCast._id });
-        }
-
-        // Update user's total_votes_received
-        if (votesReceived.length > 0) {
-          await User.updateOne(
-            { _id: authReq.user._id },
-            { $inc: { total_votes_received: -votesReceived.length } }
-          );
-          await Category.updateOne(
-            { _id: membership.category },
-            { $inc: { total_votes: -votesReceived.length, member_count: -1 } }
-          );
-        } else {
-          await Category.updateOne(
-            { _id: membership.category },
-            { $inc: { member_count: -1 } }
-          );
-        }
-
-        // Recalculate rankings for the old category
-        await recalculateRankings(membership.category);
-      }
-
-      // Delete the membership record
-      await CategoryMember.deleteOne({ _id: membership._id });
-    }
-
-    // Handle re-application after rejection in THIS category
-    if (existingInThis && existingInThis.status === 'rejected') {
-      const isAdmin = authReq.user.is_admin;
-      const autoApprove = isAdmin || authReq.user.followers_count >= 500;
-
-      existingInThis.status = autoApprove ? 'approved' : 'pending';
-      existingInThis.application_reason = reason || '';
-      existingInThis.vote_count = 0;
-      existingInThis.current_rank = null;
-      existingInThis.previous_rank = null;
-      existingInThis.rank_change = 0;
-      existingInThis.approved_at = autoApprove ? new Date() : null;
-      await existingInThis.save();
-
-      if (autoApprove) {
-        await Category.updateOne({ _id: category._id }, { $inc: { member_count: 1 } });
-        await recalculateRankings(category._id);
-      }
-
-      res.json({
-        success: true,
-        message: autoApprove ? 'Joined category successfully' : 'Application re-submitted',
-        status: existingInThis.status,
-        forfeited_categories: existingMemberships.length,
+    if (existingMembership) {
+      // User is already in a category - return confirmation requirement
+      const oldCategory = existingMembership.category as any;
+      res.status(400).json({
+        success: false,
+        message: `You are already in "${oldCategory.name}". To switch categories, you must forfeit all your votes and start from 0.`,
+        currentCategory: {
+          name: oldCategory.name,
+          slug: oldCategory.slug,
+          votes: existingMembership.vote_count,
+          rank: existingMembership.current_rank,
+        },
+        requiresConfirmation: true,
       });
       return;
     }
 
-    // New application
+    // No existing membership - proceed with normal application
     const isAdmin = authReq.user.is_admin;
-    const autoApprove = isAdmin || authReq.user.followers_count >= 500;
-    const status = autoApprove ? 'approved' : 'pending';
-
-    await CategoryMember.create({
-      category: category._id,
-      user: authReq.user._id,
-      status,
-      application_reason: reason || '',
-      approved_at: autoApprove ? new Date() : null,
-    });
-
-    if (autoApprove) {
-      await Category.updateOne({ _id: category._id }, { $inc: { member_count: 1 } });
-      await recalculateRankings(category._id);
-    }
+    const { status, autoApprove } = await createMembership(
+      authReq.user._id,
+      category._id,
+      reason,
+      isAdmin,
+      authReq.user.followers_count
+    );
 
     res.status(201).json({
       success: true,
       message: autoApprove
-        ? 'Joined category successfully'
-        : 'Application submitted for review',
+        ? 'Application approved automatically. You are now in this category!'
+        : 'Application submitted successfully. Awaiting approval.',
       status,
-      forfeited_categories: existingMemberships.length,
     });
   } catch (error) {
     console.error('Apply error:', error);
     res.status(500).json({ error: 'Failed to submit application' });
+  }
+});
+
+// POST /api/categories/:slug/apply/confirm-switch - Confirm category switch with vote forfeiture
+router.post('/:slug/apply/confirm-switch', authenticate as express.RequestHandler, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { reason, confirmForfeit } = req.body as ApplyBody & { confirmForfeit?: boolean };
+
+    // Must explicitly confirm
+    if (!confirmForfeit) {
+      res.status(400).json({
+        success: false,
+        error: 'You must confirm that you understand you will lose all votes',
+      });
+      return;
+    }
+
+    // Validate reason
+    if (!reason || reason.length < 20 || reason.length > 200) {
+      res.status(400).json({
+        success: false,
+        error: 'Reason must be between 20 and 200 characters',
+      });
+      return;
+    }
+
+    const category = await Category.findOne({ slug: req.params.slug, is_active: true });
+    if (!category) {
+      res.status(404).json({ error: 'Category not found' });
+      return;
+    }
+
+    // Verify user actually has an existing membership
+    const existingMembership = await CategoryMember.findOne({
+      user: authReq.user._id,
+      status: { $in: ['approved', 'pending'] },
+    });
+
+    if (!existingMembership) {
+      res.status(400).json({
+        success: false,
+        error: 'No existing membership found. Use the normal apply endpoint.',
+      });
+      return;
+    }
+
+    // Forfeit all existing memberships
+    const { totalVotesLost } = await forfeitExistingMemberships(authReq.user._id, category._id);
+
+    // Create new membership
+    const isAdmin = authReq.user.is_admin;
+    const { autoApprove } = await createMembership(
+      authReq.user._id,
+      category._id,
+      reason,
+      isAdmin,
+      authReq.user.followers_count
+    );
+
+    res.json({
+      success: true,
+      message: autoApprove
+        ? `Successfully switched to "${category.name}". Your votes have been reset to 0.`
+        : `Application to "${category.name}" submitted. Your votes have been reset to 0.`,
+      oldVotesLost: totalVotesLost,
+    });
+  } catch (error) {
+    console.error('Switch category error:', error);
+    res.status(500).json({ error: 'Failed to switch category' });
   }
 });
 
