@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import Category from './models/Category';
+import User from './models/User';
 
 interface SeedCategory {
   name: string;
@@ -42,6 +43,18 @@ async function seed(): Promise<void> {
         { upsert: true, returnDocument: 'after' }
       );
       console.log(`Seeded: ${cat.name}`);
+    }
+
+    // Set @codebynz as permanent admin
+    const adminResult = await User.findOneAndUpdate(
+      { handle: 'codebynz' },
+      { is_admin: true },
+      { returnDocument: 'after' }
+    );
+    if (adminResult) {
+      console.log(`Admin set: @${adminResult.handle} (is_admin: true)`);
+    } else {
+      console.log('Admin user @codebynz not found yet — will be set on first login. Run seed again after they sign in.');
     }
 
     console.log('Seeding complete!');

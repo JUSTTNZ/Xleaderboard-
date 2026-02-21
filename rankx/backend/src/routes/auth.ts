@@ -26,18 +26,27 @@ router.post('/callback', async (req: Request<Record<string, never>, unknown, Cal
 
     const meta = user.user_metadata || {};
 
+    const handle = (meta.user_name as string) || (meta.preferred_username as string) || 'user';
+    const ADMIN_HANDLES = ['codebynz'];
+
+    const updateFields: Record<string, unknown> = {
+      supabase_id: user.id,
+      twitter_id: (meta.provider_id as string) || '',
+      handle,
+      display_name: (meta.full_name as string) || (meta.name as string) || 'User',
+      avatar_url: (meta.avatar_url as string) || (meta.picture as string) || '',
+      bio: (meta.description as string) || '',
+      followers_count: (meta.followers_count as number) || 0,
+      last_login: new Date(),
+    };
+
+    if (ADMIN_HANDLES.includes(handle)) {
+      updateFields.is_admin = true;
+    }
+
     const dbUser = await User.findOneAndUpdate(
       { supabase_id: user.id },
-      {
-        supabase_id: user.id,
-        twitter_id: (meta.provider_id as string) || '',
-        handle: (meta.user_name as string) || (meta.preferred_username as string) || 'user',
-        display_name: (meta.full_name as string) || (meta.name as string) || 'User',
-        avatar_url: (meta.avatar_url as string) || (meta.picture as string) || '',
-        bio: (meta.description as string) || '',
-        followers_count: (meta.followers_count as number) || 0,
-        last_login: new Date(),
-      },
+      updateFields,
       { upsert: true, returnDocument: 'after' }
     );
 
