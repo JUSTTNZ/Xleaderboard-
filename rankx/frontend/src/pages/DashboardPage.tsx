@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { BarChart3, FolderOpen, Trophy, Vote, TrendingUp, TrendingDown, Minus, Clock, ArrowRight, Sparkles, type LucideIcon } from 'lucide-react';
+import { BarChart3, FolderOpen, Trophy, Vote, TrendingUp, TrendingDown, Minus, Clock, ArrowRight, Sparkles, Shield, Settings, type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
@@ -92,6 +92,31 @@ export default function DashboardPage() {
               </p>
             </div>
           </motion.div>
+
+          {/* Admin banner */}
+          {user.is_admin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="mb-8 rounded-xl bg-orange-900/15 border border-orange-800/30 p-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <Shield size={20} className="text-orange-400" />
+                <div>
+                  <p className="text-sm font-semibold text-orange-400">Admin Access</p>
+                  <p className="text-xs text-gray-500">You have administrative privileges</p>
+                </div>
+              </div>
+              <Link
+                to="/admin/overview"
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                <Settings size={14} />
+                Admin Dashboard
+              </Link>
+            </motion.div>
+          )}
 
           {loading ? (
             <DashboardSkeleton />
