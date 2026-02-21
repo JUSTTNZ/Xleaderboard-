@@ -12,6 +12,8 @@ export interface IUser extends Document {
   bio: string;
   followers_count: number;
   total_votes_received: number;
+  is_admin: boolean;
+  can_participate: boolean;
   last_login: Date;
   createdAt: Date;
   updatedAt: Date;

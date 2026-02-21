@@ -4,33 +4,15 @@ import Category from '../models/Category';
 import CategoryMember from '../models/CategoryMember';
 import User from '../models/User';
 import { authenticate } from '../middleware/auth';
-import { AuthenticatedRequest, ICategoryMember } from '../types';
+import { AuthenticatedRequest } from '../types';
 import { Types } from 'mongoose';
+import { recalculateRankings } from '../lib/rankings';
 
 const router = express.Router();
 
 interface VoteBody {
   category_id: string;
   voted_for_id: string;
-}
-
-async function recalculateRankings(categoryId: Types.ObjectId): Promise<void> {
-  const members = await CategoryMember.find({
-    category: categoryId,
-    status: 'approved',
-  }).sort({ vote_count: -1 }) as ICategoryMember[];
-
-  let rank = 1;
-  for (let i = 0; i < members.length; i++) {
-    if (i > 0 && members[i].vote_count < members[i - 1].vote_count) {
-      rank = i + 1;
-    }
-    const previousRank = members[i].current_rank;
-    members[i].previous_rank = previousRank;
-    members[i].current_rank = rank;
-    members[i].rank_change = previousRank ? previousRank - rank : 0;
-    await members[i].save();
-  }
 }
 
 // POST /api/votes - Cast or change a vote
@@ -72,6 +54,7 @@ router.post('/', authenticate as express.RequestHandler, async (req: Request, re
 
     if (existingVote) {
       if (existingVote.voted_for.toString() === voted_for_id) {
+        // Remove existing vote (toggle off)
         await Vote.deleteOne({ _id: existingVote._id });
         await CategoryMember.updateOne(
           { category: category._id, user: voted_for_id },
@@ -84,6 +67,7 @@ router.post('/', authenticate as express.RequestHandler, async (req: Request, re
         return;
       }
 
+      // Change vote to new person
       const oldVotedFor = existingVote.voted_for;
       await CategoryMember.updateOne(
         { category: category._id, user: oldVotedFor },
@@ -104,6 +88,7 @@ router.post('/', authenticate as express.RequestHandler, async (req: Request, re
       return;
     }
 
+    // New vote
     await Vote.create({
       voter: authReq.user._id,
       voted_for: voted_for_id,
