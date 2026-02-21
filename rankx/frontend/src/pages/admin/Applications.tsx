@@ -148,28 +148,22 @@ export default function AdminApplicationsPage() {
                       {/* Actions */}
                       {statusFilter === 'pending' && (
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {isOwnApp ? (
-                            <span className="text-xs text-gray-500 italic">Cannot self-approve</span>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleAction(app._id, 'approve')}
-                                disabled={processing === app._id}
-                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-green-900/30 text-green-400 border border-green-800 hover:bg-green-900/40 transition-colors disabled:opacity-50"
-                              >
-                                <Check size={14} />
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleAction(app._id, 'reject')}
-                                disabled={processing === app._id}
-                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/40 transition-colors disabled:opacity-50"
-                              >
-                                <X size={14} />
-                                Reject
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={() => handleAction(app._id, 'approve')}
+                            disabled={processing === app._id}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-green-900/30 text-green-400 border border-green-800 hover:bg-green-900/40 transition-colors disabled:opacity-50"
+                          >
+                            <Check size={14} />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleAction(app._id, 'reject')}
+                            disabled={processing === app._id}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/40 transition-colors disabled:opacity-50"
+                          >
+                            <X size={14} />
+                            Reject
+                          </button>
                         </div>
                       )}
                     </div>

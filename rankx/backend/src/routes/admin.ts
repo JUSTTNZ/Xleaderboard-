@@ -117,14 +117,6 @@ router.post('/applications/:id/approve', requireAdmin as express.RequestHandler,
       return;
     }
 
-    // Admin cannot approve their own application
-    if (application.user.toString() === authReq.user._id.toString()) {
-      res.status(403).json({
-        error: 'You cannot approve your own application',
-      });
-      return;
-    }
-
     application.status = 'approved';
     application.approved_by = authReq.user._id;
     application.approved_at = new Date();
@@ -158,14 +150,6 @@ router.post('/applications/:id/reject', requireAdmin as express.RequestHandler, 
 
     if (application.status !== 'pending') {
       res.status(400).json({ error: `Application is already ${application.status}` });
-      return;
-    }
-
-    // Admin cannot reject their own application
-    if (application.user.toString() === authReq.user._id.toString()) {
-      res.status(403).json({
-        error: 'You cannot reject your own application',
-      });
       return;
     }
 
