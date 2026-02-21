@@ -22,10 +22,17 @@ router.post('/', authenticate as express.RequestHandler, async (req: Request, re
       return;
     }
 
-    const category = await Category.findOne({ slug: category_slug, is_active: true });
+    // First try without is_active filter to find the category regardless of status
+    let category = await Category.findOne({ slug: category_slug });
     if (!category) {
       res.status(404).json({ error: 'Category not found' });
       return;
+    }
+
+    // If category is inactive, reactivate it
+    if (!category.is_active) {
+      category.is_active = true;
+      await category.save();
     }
 
     // Check if already a member or has pending application

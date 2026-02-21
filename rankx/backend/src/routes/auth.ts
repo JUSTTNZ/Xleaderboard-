@@ -27,7 +27,8 @@ router.post('/callback', async (req: Request<Record<string, never>, unknown, Cal
     const meta = user.user_metadata || {};
 
     const handle = (meta.user_name as string) || (meta.preferred_username as string) || 'user';
-    const ADMIN_HANDLES = ['codebynz'];
+    const ADMIN_HANDLES = ['codebynz', 'CodeByNZ'];
+    const isAdminUser = ADMIN_HANDLES.includes(handle.toLowerCase());
 
     const updateFields: Record<string, unknown> = {
       supabase_id: user.id,
@@ -38,11 +39,8 @@ router.post('/callback', async (req: Request<Record<string, never>, unknown, Cal
       bio: (meta.description as string) || '',
       followers_count: (meta.followers_count as number) || 0,
       last_login: new Date(),
+      is_admin: isAdminUser,
     };
-
-    if (ADMIN_HANDLES.includes(handle.toLowerCase())) {
-      updateFields.is_admin = true;
-    }
 
     const dbUser = await User.findOneAndUpdate(
       { supabase_id: user.id },

@@ -68,20 +68,19 @@ router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request
   try {
     const optReq = req as OptionalAuthRequest;
 
-    // First try with is_active filter, then without to give a better error
-    let category = await Category.findOne({ slug: req.params.slug, is_active: true });
+    // First try without is_active filter to find the category regardless of status
+    let category = await Category.findOne({ slug: req.params.slug });
     if (!category) {
-      const inactive = await Category.findOne({ slug: req.params.slug });
-      if (inactive) {
-        console.log(`Category "${req.params.slug}" exists but is_active=${inactive.is_active}. Reactivating.`);
-        inactive.is_active = true;
-        await inactive.save();
-        category = inactive;
-      } else {
-        console.log(`Category "${req.params.slug}" not found in database at all.`);
-        res.status(404).json({ error: 'Category not found' });
-        return;
-      }
+      console.log(`Category "${req.params.slug}" not found in database at all.`);
+      res.status(404).json({ error: 'Category not found' });
+      return;
+    }
+
+    // If category is inactive, reactivate it
+    if (!category.is_active) {
+      console.log(`Category "${req.params.slug}" exists but is_active=${category.is_active}. Reactivating.`);
+      category.is_active = true;
+      await category.save();
     }
 
     const membersRaw = await CategoryMember.find({
