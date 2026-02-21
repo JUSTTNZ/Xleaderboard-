@@ -10,6 +10,8 @@ const userSchema = new Schema<IUser>({
   bio: { type: String, default: '' },
   followers_count: { type: Number, default: 0 },
   total_votes_received: { type: Number, default: 0 },
+  is_admin: { type: Boolean, default: false },
+  can_participate: { type: Boolean, default: true },
   last_login: { type: Date, default: Date.now },
 }, { timestamps: true });
 

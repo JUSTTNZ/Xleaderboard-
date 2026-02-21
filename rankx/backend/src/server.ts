@@ -8,6 +8,7 @@ import categoryRoutes from './routes/categories';
 import voteRoutes from './routes/vote';
 import profileRoutes from './routes/profile';
 import dashboardRoutes from './routes/dashboard';
+import adminRoutes from './routes/admin';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +26,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/votes', voteRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root endpoint - API info
 app.get('/', (_req: Request, res: Response) => {
@@ -39,7 +41,8 @@ app.get('/', (_req: Request, res: Response) => {
       categories: '/api/categories',
       votes: '/api/votes',
       profile: '/api/profile',
-      dashboard: '/api/dashboard'
+      dashboard: '/api/dashboard',
+      admin: '/api/admin'
     }
   });
 });

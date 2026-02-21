@@ -2,8 +2,10 @@ import express, { Request, Response } from 'express';
 import Category from '../models/Category';
 import CategoryMember from '../models/CategoryMember';
 import Vote from '../models/Vote';
+import User from '../models/User';
 import { optionalAuth, authenticate } from '../middleware/auth';
 import { AuthenticatedRequest, OptionalAuthRequest, ICategoryMemberPopulatedUser } from '../types';
+import { recalculateRankings } from '../lib/rankings';
 
 const router = express.Router();
 
@@ -129,6 +131,9 @@ router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request
 });
 
 // POST /api/categories/:slug/apply - Apply to join category
+// SINGLE-CATEGORY RULE: Users can only be in ONE category.
+// Applying to a new category forfeits all votes in the current category.
+// Admin (@codebynz) applications are auto-approved instantly.
 router.post('/:slug/apply', authenticate as express.RequestHandler, async (req: Request, res: Response): Promise<void> => {
   try {
     const authReq = req as AuthenticatedRequest;
@@ -139,30 +144,126 @@ router.post('/:slug/apply', authenticate as express.RequestHandler, async (req: 
       return;
     }
 
-    const existing = await CategoryMember.findOne({
+    // Check if user already has a membership in THIS category
+    const existingInThis = await CategoryMember.findOne({
       category: category._id,
       user: authReq.user._id,
     });
 
-    if (existing) {
-      if (existing.status === 'approved') {
+    if (existingInThis) {
+      if (existingInThis.status === 'approved') {
         res.status(409).json({ error: 'Already a member of this category' });
         return;
       }
-      if (existing.status === 'pending') {
+      if (existingInThis.status === 'pending') {
         res.status(409).json({ error: 'Application already pending' });
         return;
       }
-      if (existing.status === 'rejected') {
-        existing.status = 'pending';
-        existing.application_reason = reason || '';
-        await existing.save();
-        res.json({ success: true, message: 'Application re-submitted', status: 'pending' });
-        return;
-      }
+      // If rejected, allow re-application - will be handled below after cleanup
     }
 
-    const autoApprove = authReq.user.followers_count >= 500;
+    // SINGLE-CATEGORY RESTRICTION:
+    // Find any existing approved/pending memberships in OTHER categories
+    const existingMemberships = await CategoryMember.find({
+      user: authReq.user._id,
+      category: { $ne: category._id },
+      status: { $in: ['approved', 'pending'] },
+    });
+
+    // Forfeit all existing memberships and votes
+    for (const membership of existingMemberships) {
+      if (membership.status === 'approved') {
+        // Delete all votes this user received in that category
+        const votesReceived = await Vote.find({
+          voted_for: authReq.user._id,
+          category: membership.category,
+        });
+
+        // Decrement vote counts for each vote removed
+        if (votesReceived.length > 0) {
+          await Vote.deleteMany({
+            voted_for: authReq.user._id,
+            category: membership.category,
+          });
+        }
+
+        // Also delete any vote the user CAST in that category
+        const voteCast = await Vote.findOne({
+          voter: authReq.user._id,
+          category: membership.category,
+        });
+        if (voteCast) {
+          await CategoryMember.updateOne(
+            { category: membership.category, user: voteCast.voted_for },
+            { $inc: { vote_count: -1 } }
+          );
+          await User.updateOne(
+            { _id: voteCast.voted_for },
+            { $inc: { total_votes_received: -1 } }
+          );
+          await Category.updateOne(
+            { _id: membership.category },
+            { $inc: { total_votes: -1 } }
+          );
+          await Vote.deleteOne({ _id: voteCast._id });
+        }
+
+        // Update user's total_votes_received
+        if (votesReceived.length > 0) {
+          await User.updateOne(
+            { _id: authReq.user._id },
+            { $inc: { total_votes_received: -votesReceived.length } }
+          );
+          await Category.updateOne(
+            { _id: membership.category },
+            { $inc: { total_votes: -votesReceived.length, member_count: -1 } }
+          );
+        } else {
+          await Category.updateOne(
+            { _id: membership.category },
+            { $inc: { member_count: -1 } }
+          );
+        }
+
+        // Recalculate rankings for the old category
+        await recalculateRankings(membership.category);
+      }
+
+      // Delete the membership record
+      await CategoryMember.deleteOne({ _id: membership._id });
+    }
+
+    // Handle re-application after rejection in THIS category
+    if (existingInThis && existingInThis.status === 'rejected') {
+      const isAdmin = authReq.user.is_admin;
+      const autoApprove = isAdmin || authReq.user.followers_count >= 500;
+
+      existingInThis.status = autoApprove ? 'approved' : 'pending';
+      existingInThis.application_reason = reason || '';
+      existingInThis.vote_count = 0;
+      existingInThis.current_rank = null;
+      existingInThis.previous_rank = null;
+      existingInThis.rank_change = 0;
+      existingInThis.approved_at = autoApprove ? new Date() : null;
+      await existingInThis.save();
+
+      if (autoApprove) {
+        await Category.updateOne({ _id: category._id }, { $inc: { member_count: 1 } });
+        await recalculateRankings(category._id);
+      }
+
+      res.json({
+        success: true,
+        message: autoApprove ? 'Joined category successfully' : 'Application re-submitted',
+        status: existingInThis.status,
+        forfeited_categories: existingMemberships.length,
+      });
+      return;
+    }
+
+    // New application
+    const isAdmin = authReq.user.is_admin;
+    const autoApprove = isAdmin || authReq.user.followers_count >= 500;
     const status = autoApprove ? 'approved' : 'pending';
 
     await CategoryMember.create({
@@ -175,12 +276,16 @@ router.post('/:slug/apply', authenticate as express.RequestHandler, async (req: 
 
     if (autoApprove) {
       await Category.updateOne({ _id: category._id }, { $inc: { member_count: 1 } });
+      await recalculateRankings(category._id);
     }
 
     res.status(201).json({
       success: true,
-      message: autoApprove ? 'Joined category successfully' : 'Application submitted for review',
+      message: autoApprove
+        ? 'Joined category successfully'
+        : 'Application submitted for review',
       status,
+      forfeited_categories: existingMemberships.length,
     });
   } catch (error) {
     console.error('Apply error:', error);
