@@ -67,18 +67,41 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
 router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request, res: Response): Promise<void> => {
   try {
     const optReq = req as OptionalAuthRequest;
-    const category = await Category.findOne({ slug: req.params.slug, is_active: true });
+
+    // First try with is_active filter, then without to give a better error
+    let category = await Category.findOne({ slug: req.params.slug, is_active: true });
     if (!category) {
-      res.status(404).json({ error: 'Category not found' });
-      return;
+      const inactive = await Category.findOne({ slug: req.params.slug });
+      if (inactive) {
+        console.log(`Category "${req.params.slug}" exists but is_active=${inactive.is_active}. Reactivating.`);
+        inactive.is_active = true;
+        await inactive.save();
+        category = inactive;
+      } else {
+        console.log(`Category "${req.params.slug}" not found in database at all.`);
+        res.status(404).json({ error: 'Category not found' });
+        return;
+      }
     }
 
-    const members = await CategoryMember.find({
+    const membersRaw = await CategoryMember.find({
       category: category._id,
       status: 'approved',
     })
       .sort({ vote_count: -1 })
       .populate('user', 'handle display_name avatar_url bio followers_count') as unknown as ICategoryMemberPopulatedUser[];
+
+    // Filter out orphaned members (user was deleted but membership remains)
+    const members = membersRaw.filter((m) => m.user != null);
+
+    // Clean up orphaned memberships in the background
+    if (members.length < membersRaw.length) {
+      const orphanedIds = membersRaw.filter((m) => m.user == null).map((m) => m._id);
+      console.log(`Cleaning up ${orphanedIds.length} orphaned memberships in category "${category.slug}"`);
+      CategoryMember.deleteMany({ _id: { $in: orphanedIds } }).catch((err: unknown) =>
+        console.error('Failed to clean orphaned memberships:', err)
+      );
+    }
 
     let userVote: string | null = null;
     let userMembership: Awaited<ReturnType<typeof CategoryMember.findOne>> = null;
