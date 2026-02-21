@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import Category from '../models/Category';
 import CategoryMember from '../models/CategoryMember';
 import Vote from '../models/Vote';
@@ -131,7 +132,7 @@ router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request
 });
 
 // Helper: forfeit all existing memberships and votes in other categories
-async function forfeitExistingMemberships(userId: unknown, excludeCategoryId: unknown) {
+async function forfeitExistingMemberships(userId: Types.ObjectId, excludeCategoryId: Types.ObjectId) {
   const existingMemberships = await CategoryMember.find({
     user: userId,
     category: { $ne: excludeCategoryId },
@@ -206,7 +207,7 @@ async function forfeitExistingMemberships(userId: unknown, excludeCategoryId: un
 }
 
 // Helper: create or re-activate membership in a category
-async function createMembership(userId: unknown, categoryId: unknown, reason: string, isAdmin: boolean, followersCount: number) {
+async function createMembership(userId: Types.ObjectId, categoryId: Types.ObjectId, reason: string, isAdmin: boolean, followersCount: number) {
   const autoApprove = isAdmin || followersCount >= 500;
   const status = autoApprove ? 'approved' : 'pending';
 
