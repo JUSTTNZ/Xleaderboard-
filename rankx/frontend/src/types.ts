@@ -8,6 +8,8 @@ export interface User {
   bio: string;
   followers_count: number;
   total_votes_received: number;
+  is_admin: boolean;
+  can_participate: boolean;
   last_login: string;
   createdAt: string;
   updatedAt: string;
@@ -120,4 +122,81 @@ export interface DashboardData {
   rankings: Ranking[];
   votes: VoteCast[];
   pending_applications: PendingApplication[];
+}
+
+// ─── Admin Types ─────────────────────────────────────────
+export interface AdminOverview {
+  stats: {
+    totalUsers: number;
+    totalCategories: number;
+    totalVotes: number;
+    pendingApplications: number;
+    totalMembers: number;
+  };
+  adminProfile: {
+    category: { name: string; slug: string; icon: string };
+    rank: number | null;
+    votes: number;
+  } | null;
+  recentUsers: {
+    _id: string;
+    handle: string;
+    display_name: string;
+    avatar_url: string;
+    createdAt: string;
+    is_admin: boolean;
+  }[];
+}
+
+export interface AdminApplication {
+  _id: string;
+  user: {
+    _id: string;
+    handle: string;
+    display_name: string;
+    avatar_url: string;
+    bio: string;
+    followers_count: number;
+    is_admin: boolean;
+  };
+  category: {
+    _id: string;
+    name: string;
+    slug: string;
+    icon: string;
+  };
+  reason: string;
+  status: string;
+  applied_at: string;
+}
+
+export interface AdminUser {
+  _id: string;
+  handle: string;
+  display_name: string;
+  avatar_url: string;
+  bio: string;
+  followers_count: number;
+  total_votes_received: number;
+  is_admin: boolean;
+  createdAt: string;
+  last_login: string;
+  current_category: {
+    name: string;
+    slug: string;
+    icon: string;
+    rank: number | null;
+    votes: number;
+  } | null;
+}
+
+export interface AdminCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  member_count: number;
+  total_votes: number;
+  is_active: boolean;
 }

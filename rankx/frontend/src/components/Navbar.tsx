@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Twitter, LayoutDashboard, LogOut, Trophy, Menu, X } from 'lucide-react';
+import { Twitter, LayoutDashboard, LogOut, Trophy, Menu, X, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -9,6 +9,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -59,6 +60,22 @@ export default function Navbar() {
                   <LayoutDashboard size={18} />
                   <span>Dashboard</span>
                 </Link>
+
+                {/* Admin link */}
+                {user.is_admin && (
+                  <Link
+                    to="/admin/overview"
+                    className={`flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 ${
+                      isAdminRoute
+                        ? 'text-orange-400'
+                        : 'text-orange-400/60 hover:text-orange-400'
+                    }`}
+                  >
+                    <Shield size={16} />
+                    <span>Admin</span>
+                  </Link>
+                )}
+
                 <Link
                   to={`/profile/${user.handle}`}
                   className="flex items-center"
@@ -116,7 +133,7 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              
+
               {user ? (
                 <>
                   <Link
@@ -127,6 +144,18 @@ export default function Navbar() {
                     <LayoutDashboard size={16} />
                     Dashboard
                   </Link>
+
+                  {user.is_admin && (
+                    <Link
+                      to="/admin/overview"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-orange-400 hover:bg-orange-900/10 rounded-lg transition-colors duration-200"
+                    >
+                      <Shield size={16} />
+                      Admin Panel
+                    </Link>
+                  )}
+
                   <Link
                     to={`/profile/${user.handle}`}
                     onClick={() => setMobileOpen(false)}
