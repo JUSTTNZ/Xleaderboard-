@@ -341,16 +341,17 @@ export default function LeaderboardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           className="card overflow-hidden"
         >
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#222] bg-[#0A0A0A]">
-                  <th className="w-12 px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Rank</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Creator</th>
-                  <th className="w-20 px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Votes</th>
-                  <th className="w-32 px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Vote</th>
+                  <th className="w-10 sm:w-12 px-2 sm:px-6 py-2 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Rank</th>
+                  <th className="px-2 sm:px-6 py-2 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Creator</th>
+                  <th className="w-16 sm:w-20 px-2 sm:px-6 py-2 sm:py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">Votes</th>
+                  <th className="w-24 sm:w-32 px-2 sm:px-6 py-2 sm:py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Vote</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#222]">
@@ -367,7 +368,7 @@ export default function LeaderboardPage() {
             </table>
           </div>
           {top3.length >= 3 && rest.length === 0 && (
-            <div className="py-8 text-center text-sm text-gray-500">
+            <div className="py-6 sm:py-8 text-center text-xs sm:text-sm text-gray-500">
               Only 3 members in this category so far.
             </div>
           )}
@@ -376,12 +377,12 @@ export default function LeaderboardPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="card rounded-xl py-20 text-center"
+          className="card rounded-xl py-12 sm:py-20 text-center"
         >
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0A0A0A] border border-[#333]">
-            <Users size={28} className="text-gray-600" />
+          <div className="mx-auto mb-3 sm:mb-4 flex h-12 sm:h-16 w-12 sm:w-16 items-center justify-center rounded-2xl bg-[#0A0A0A] border border-[#333]">
+            <Users size={20} className="sm:size-28 text-gray-600" />
           </div>
-          <p className="text-body text-gray-400">No members yet. Be the first to apply!</p>
+          <p className="text-xs sm:text-body text-gray-400">No members yet. Be the first to apply!</p>
         </motion.div>
       )}
 
@@ -392,7 +393,7 @@ export default function LeaderboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 py-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4 py-4 sm:py-6"
             onClick={() => { setApplyModal(false); setApplyReason(''); }}
           >
             <motion.div
@@ -400,22 +401,22 @@ export default function LeaderboardPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="w-full max-w-md card p-6"
+              className="w-full max-w-md card p-4 sm:p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-card-heading font-bold text-white">
+              <div className="mb-4 sm:mb-6 flex items-center justify-between">
+                <h2 className="text-lg sm:text-card-heading font-bold text-white">
                   Apply to {category.name}
                 </h2>
                 <button
                   onClick={() => { setApplyModal(false); setApplyReason(''); }}
                   className="p-1.5 rounded-lg text-gray-400 hover:bg-[#2A2A2A] hover:text-white transition-colors"
                 >
-                  <X size={20} />
+                  <X size={18} className="sm:size-20" />
                 </button>
               </div>
 
-              <p className="text-sm mb-4 text-gray-400">
+              <p className="text-xs sm:text-sm mb-3 sm:mb-4 text-gray-400">
                 Tell us why you belong in this category (20-200 characters).
               </p>
 
@@ -424,32 +425,32 @@ export default function LeaderboardPage() {
                 onChange={(e) => setApplyReason(e.target.value)}
                 placeholder="Why do you belong in this category?"
                 maxLength={200}
-                rows={4}
-                className="input-base focus-ring mb-3 resize-none"
+                rows={3}
+                className="input-base focus-ring mb-2 sm:mb-3 resize-none text-sm"
               />
 
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
                 <p className="text-xs text-gray-500">
-                  {applyReason.length}/200 characters
+                  {applyReason.length}/200
                 </p>
                 {applyReason.length > 0 && applyReason.length < 20 && (
-                  <p className="text-xs text-orange-400">Minimum 20 characters</p>
+                  <p className="text-xs text-orange-400">Min 20 chars</p>
                 )}
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={() => { setApplyModal(false); setApplyReason(''); }}
-                  className="btn-secondary flex-1 py-2.5 justify-center"
+                  className="btn-secondary flex-1 py-2 sm:py-2.5 justify-center text-xs sm:text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleApply}
                   disabled={applyReason.length < 20 || applyReason.length > 200 || applying}
-                  className="btn-primary flex-1 py-2.5 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary flex-1 py-2 sm:py-2.5 justify-center text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {applying ? 'Submitting...' : 'Submit Application'}
+                  {applying ? 'Submitting...' : 'Submit'}
                 </button>
               </div>
             </motion.div>
@@ -464,7 +465,7 @@ export default function LeaderboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4"
             onClick={() => { setShowSwitchWarning(false); setConfirmText(''); }}
           >
             <motion.div
@@ -472,18 +473,18 @@ export default function LeaderboardPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="bg-[#1A1A1A] border border-red-800 rounded-xl max-w-lg w-full p-6"
+              className="bg-[#1A1A1A] border border-red-800 rounded-xl max-w-lg w-full p-4 sm:p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start gap-4 mb-6">
-                <div className="p-3 bg-red-900/30 rounded-lg flex-shrink-0">
-                  <AlertTriangle className="w-8 h-8 text-red-400" />
+              <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="p-2 sm:p-3 bg-red-900/30 rounded-lg flex-shrink-0">
+                  <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-red-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-red-400 mb-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-red-400 mb-1 sm:mb-2">
                     Warning: You Will Lose All Votes
                   </h3>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-400 text-xs sm:text-sm">
                     You are currently in <span className="font-semibold text-white">
                       {currentMembership?.name}
                     </span> with <span className="font-semibold text-white">
@@ -493,63 +494,60 @@ export default function LeaderboardPage() {
                 </div>
               </div>
 
-              <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6">
-                <h4 className="font-semibold text-red-400 mb-2 flex items-center gap-2">
-                  <Ban className="w-5 h-5" />
+              <div className="bg-red-900/20 border border-red-800 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <h4 className="font-semibold text-red-400 mb-2 flex items-center gap-2 text-xs sm:text-sm">
+                  <Ban className="w-4 h-4 sm:w-5 sm:h-5" />
                   What happens if you switch:
                 </h4>
-                <ul className="space-y-2 text-sm text-gray-300">
+                <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-300">
                   <li className="flex items-start gap-2">
-                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                    <span>You will be <strong>removed</strong> from &quot;{currentMembership?.name}&quot;</span>
+                    <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span>You will be <strong>removed</strong> from "{currentMembership?.name}"</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                    <span>All <strong>{currentMembership?.votes} votes</strong> you received will be deleted</span>
+                    <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span>All <strong>{currentMembership?.votes} votes</strong> will be deleted</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 mt-0.5 flex-shrink-0" />
                     <span>Your rank will be <strong>lost forever</strong></span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                    <span>You will join &quot;{category?.name}&quot; with <strong>0 votes</strong></span>
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>You will join "{category?.name}" with <strong>0 votes</strong></span>
                   </li>
                 </ul>
               </div>
 
-              <div className="bg-[#0A0A0A] border border-[#333] rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-400 mb-2">
-                  Are you absolutely sure you want to switch categories?
-                </p>
-                <p className="text-xs text-gray-500">
-                  This action cannot be undone. Type <span className="font-mono text-white">CONFIRM</span> to continue.
+              <div className="bg-[#0A0A0A] border border-[#333] rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                <p className="text-xs sm:text-sm text-gray-400 mb-2">
+                  Are you absolutely sure? Type <span className="font-mono text-white">CONFIRM</span> to continue.
                 </p>
                 <input
                   type="text"
                   placeholder="Type CONFIRM"
                   value={confirmText}
-                  className="w-full mt-3 px-4 py-2 bg-[#1A1A1A] border border-[#333] rounded-lg text-white text-sm focus:outline-none focus:border-red-800"
+                  className="w-full mt-2 sm:mt-3 px-3 sm:px-4 py-2 bg-[#1A1A1A] border border-[#333] rounded-lg text-white text-xs sm:text-sm focus:outline-none focus:border-red-800"
                   onChange={(e) => setConfirmText(e.target.value)}
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={() => {
                     setShowSwitchWarning(false);
                     setConfirmText('');
                   }}
-                  className="flex-1 px-4 py-2.5 border border-gray-700 rounded-lg hover:bg-[#2A2A2A] text-gray-300 text-sm font-medium transition-colors"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-700 rounded-lg hover:bg-[#2A2A2A] text-gray-300 text-xs sm:text-sm font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmSwitch}
                   disabled={confirmText !== 'CONFIRM' || applying}
-                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm font-medium transition-colors"
                 >
-                  {applying ? 'Switching...' : 'Switch Category & Lose Votes'}
+                  {applying ? 'Switching...' : 'Switch & Lose Votes'}
                 </button>
               </div>
             </motion.div>
