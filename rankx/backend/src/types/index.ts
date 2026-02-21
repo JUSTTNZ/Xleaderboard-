@@ -84,11 +84,17 @@ export interface IVotePopulated extends Omit<IVote, 'voted_for' | 'category'> {
 export interface IBadge extends Document {
   _id: Types.ObjectId;
   name: string;
+  slug: string;
   description: string;
   icon: string;
   color: string;
+  tier: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  category: 'ranking' | 'votes' | 'engagement' | 'social' | 'special';
   criteria_type: 'votes' | 'rank' | 'categories' | 'special';
   criteria_value: number;
+  points: number;
+  is_secret: boolean;
+  awarded_count: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -98,6 +104,7 @@ export interface IUserBadge extends Document {
   user: Types.ObjectId;
   badge: Types.ObjectId;
   earned_at: Date;
+  progress: number;
   createdAt: Date;
   updatedAt: Date;
 }

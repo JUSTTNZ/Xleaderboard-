@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Twitter, LayoutDashboard, LogOut, Trophy, Menu, X, Shield } from 'lucide-react';
+import { Twitter, LayoutDashboard, LogOut, Trophy, Menu, X, Shield, Award } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,6 +14,7 @@ export default function Navbar() {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/categories', label: 'Categories' },
+    { path: '/badges', label: 'Badges' },
   ];
 
   return (
@@ -49,6 +50,18 @@ export default function Navbar() {
           <div className="hidden items-center gap-4 md:flex">
             {user ? (
               <>
+                <Link
+                  to="/badges"
+                  className={`flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 ${
+                    isActive('/badges')
+                      ? 'text-yellow-400'
+                      : 'text-gray-400 hover:text-yellow-400'
+                  }`}
+                >
+                  <Award size={16} />
+                  <span>Badges</span>
+                </Link>
+
                 <Link
                   to="/dashboard"
                   className={`flex items-center gap-2 text-sm font-medium transition-colors duration-200 ${

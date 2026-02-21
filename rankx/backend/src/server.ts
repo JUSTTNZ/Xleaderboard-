@@ -9,6 +9,7 @@ import voteRoutes from './routes/vote';
 import profileRoutes from './routes/profile';
 import dashboardRoutes from './routes/dashboard';
 import adminRoutes from './routes/admin';
+import badgeRoutes from './routes/badges';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +28,7 @@ app.use('/api/votes', voteRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/badges', badgeRoutes);
 
 // Root endpoint - API info
 app.get('/', (_req: Request, res: Response) => {

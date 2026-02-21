@@ -8,6 +8,7 @@ import CategoriesPage from './pages/CategoriesPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import DashboardPage from './pages/DashboardPage';
+import BadgesPage from './pages/BadgesPage';
 import AuthCallback from './pages/AuthCallback';
 import AdminOverviewPage from './pages/admin/Overview';
 import AdminApplicationsPage from './pages/admin/Applications';
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/category/:slug" element={<LeaderboardPage />} />
                 <Route path="/profile/:handle" element={<ProfilePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/badges" element={<BadgesPage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 {/* Admin routes */}
                 <Route path="/admin/overview" element={<AdminOverviewPage />} />

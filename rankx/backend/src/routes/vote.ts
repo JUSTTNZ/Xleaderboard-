@@ -7,6 +7,7 @@ import { authenticate } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
 import { Types } from 'mongoose';
 import { recalculateRankings } from '../lib/rankings';
+import { BadgeService } from '../services/badgeService';
 
 const router = express.Router();
 
@@ -102,6 +103,13 @@ router.post('/', authenticate as express.RequestHandler, async (req: Request, re
     await Category.updateOne({ _id: category._id }, { $inc: { total_votes: 1 } });
     await User.updateOne({ _id: voted_for_id }, { $inc: { total_votes_received: 1 } });
     await recalculateRankings(category._id);
+
+    // Check badges for the voted user
+    await BadgeService.checkVoteBadges(voted_for_id);
+    await BadgeService.checkRankingBadges(voted_for_id, category_id);
+
+    // Check badges for the voter
+    await BadgeService.checkEngagementBadges(authReq.user._id);
 
     res.json({ success: true, message: 'Vote recorded successfully', action: 'voted' });
   } catch (error) {

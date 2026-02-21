@@ -3,11 +3,29 @@ import { IBadge, IUserBadge } from '../types';
 
 const badgeSchema = new Schema<IBadge>({
   name: { type: String, required: true, unique: true },
+  slug: { type: String, required: true, unique: true },
   description: { type: String, required: true },
   icon: { type: String, default: 'Award' },
   color: { type: String, default: '#FFFFFF' },
-  criteria_type: { type: String, enum: ['votes', 'rank', 'categories', 'special'], required: true },
+  tier: { 
+    type: String, 
+    enum: ['common', 'uncommon', 'rare', 'epic', 'legendary'], 
+    default: 'common' 
+  },
+  category: { 
+    type: String, 
+    enum: ['ranking', 'votes', 'engagement', 'social', 'special'], 
+    default: 'ranking' 
+  },
+  criteria_type: { 
+    type: String, 
+    enum: ['votes', 'rank', 'categories', 'special'], 
+    required: true 
+  },
   criteria_value: { type: Number, default: 0 },
+  points: { type: Number, default: 0 },
+  is_secret: { type: Boolean, default: false },
+  awarded_count: { type: Number, default: 0 },
 }, { timestamps: true });
 
 const Badge: Model<IBadge> = mongoose.model<IBadge>('Badge', badgeSchema);
@@ -18,6 +36,7 @@ const userBadgeSchema = new Schema<IUserBadge>({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   badge: { type: Schema.Types.ObjectId, ref: 'Badge', required: true },
   earned_at: { type: Date, default: Date.now },
+  progress: { type: Number, default: 100 },
 }, { timestamps: true });
 
 userBadgeSchema.index({ user: 1, badge: 1 }, { unique: true });

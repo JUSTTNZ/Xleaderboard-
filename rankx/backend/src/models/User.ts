@@ -15,9 +15,6 @@ const userSchema = new Schema<IUser>({
   last_login: { type: Date, default: Date.now },
 }, { timestamps: true });
 
-userSchema.index({ supabase_id: 1 });
-userSchema.index({ handle: 1 });
-
 const User: Model<IUser> = mongoose.model<IUser>('User', userSchema);
 
 export default User;
