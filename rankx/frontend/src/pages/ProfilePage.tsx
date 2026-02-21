@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ExternalLink, Trophy, BarChart3, FolderOpen, TrendingUp, TrendingDown, Minus, Award, Share2, Check, type LucideIcon } from 'lucide-react';
+import { ExternalLink, Trophy, BarChart3, FolderOpen, TrendingUp, TrendingDown, Minus, Award, Share2, Check, Shield, type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 import Icon from '../components/Icon';
 import Tabs from '../components/Tabs';
 import { ProfileSkeleton } from '../components/LoadingSkeleton';
@@ -22,6 +23,7 @@ const profileTabs = [
 
 export default function ProfilePage() {
   const { handle } = useParams<{ handle: string }>();
+  const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('rankings');
@@ -112,7 +114,7 @@ export default function ProfilePage() {
                     <h1 className="text-page-heading text-white">{user.display_name}</h1>
                     <p className="text-lg text-gray-400 mt-1">@{user.handle}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <button
                       onClick={handleShare}
                       className="btn-secondary py-2.5 px-4 text-sm"
@@ -129,6 +131,15 @@ export default function ProfilePage() {
                       <ExternalLink size={16} />
                       View on X
                     </a>
+                    {currentUser?.handle === handle && currentUser?.is_admin && (
+                      <Link
+                        to="/admin/overview"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-orange-900/30 text-orange-400 border border-orange-800 rounded-lg text-sm font-medium hover:bg-orange-900/40 transition-colors"
+                      >
+                        <Shield size={16} />
+                        Admin Dashboard
+                      </Link>
+                    )}
                   </div>
                 </div>
                 {user.bio && (
