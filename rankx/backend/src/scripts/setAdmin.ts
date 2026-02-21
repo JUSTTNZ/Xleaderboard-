@@ -7,7 +7,7 @@ async function setAdminUser(): Promise<void> {
     await mongoose.connect(process.env.MONGODB_URI!);
     console.log('Connected to MongoDB');
 
-    const user = await User.findOne({ handle: 'codebynz' });
+    const user = await User.findOne({ handle: { $regex: /^codebynz$/i } });
 
     if (!user) {
       console.log('User @codebynz not found in database');

@@ -45,9 +45,9 @@ async function seed(): Promise<void> {
       console.log(`Seeded: ${cat.name}`);
     }
 
-    // Set @codebynz as permanent admin
+    // Set @codebynz as permanent admin (case-insensitive)
     const adminResult = await User.findOneAndUpdate(
-      { handle: 'codebynz' },
+      { handle: { $regex: /^codebynz$/i } },
       { is_admin: true },
       { returnDocument: 'after' }
     );

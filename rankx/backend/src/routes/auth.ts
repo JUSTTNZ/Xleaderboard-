@@ -40,7 +40,7 @@ router.post('/callback', async (req: Request<Record<string, never>, unknown, Cal
       last_login: new Date(),
     };
 
-    if (ADMIN_HANDLES.includes(handle)) {
+    if (ADMIN_HANDLES.includes(handle.toLowerCase())) {
       updateFields.is_admin = true;
     }
 
