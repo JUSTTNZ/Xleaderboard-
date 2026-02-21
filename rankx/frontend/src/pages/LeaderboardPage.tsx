@@ -380,9 +380,13 @@ export default function LeaderboardPage() {
                 </button>
               </div>
 
-              <p className="text-sm mb-6 text-gray-400">
+              <p className="text-sm mb-4 text-gray-400">
                 Tell us why you belong in this category (20-200 characters).
               </p>
+
+              <div className="mb-4 rounded-lg bg-orange-900/15 border border-orange-800/30 p-3 text-xs text-orange-400">
+                <strong>Note:</strong> You can only be in one category at a time. Applying here will forfeit any votes you've received in your current category.
+              </div>
 
               <textarea
                 value={applyReason}
