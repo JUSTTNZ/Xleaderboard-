@@ -14,27 +14,28 @@ function PodiumCard({ member, rank, onVote, currentUserId }: { member: Leaderboa
   const podiumClass = rank === 1 ? 'podium-gold' : rank === 2 ? 'podium-silver' : 'podium-bronze';
   const isSelf = currentUserId && member.user._id === currentUserId;
   const borderSize = rank === 1 ? 'border-4' : 'border-2';
-  const avatarSize = rank === 1 ? 'h-20 w-20' : 'h-16 w-16';
+  const avatarSize = rank === 1 ? 'h-14 w-14 sm:h-20 sm:w-20' : rank === 2 ? 'h-12 w-12 sm:h-16 sm:w-16' : 'h-12 w-12 sm:h-16 sm:w-16';
   const rankColor = rank === 1 ? 'text-yellow-500' : rank === 2 ? 'text-gray-400' : 'text-orange-500';
+  const crownSize = rank === 1 ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-5 h-5 sm:w-5.5 sm:h-5.5';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.1, duration: 0.5 }}
-      className={`rounded-2xl border p-6 flex flex-col items-center text-center transition-all duration-300 ${podiumClass} ${rank === 1 ? 'sm:-mt-4 sm:scale-105' : ''}`}
+      className={`rounded-xl sm:rounded-2xl border p-3 sm:p-6 flex flex-col items-center text-center transition-all duration-300 ${podiumClass} ${rank === 1 ? 'sm:-mt-4 sm:scale-105' : ''}`}
     >
       {/* Crown for #1 */}
-      {rank === 1 && <Crown size={28} className="text-yellow-500 mb-2" />}
-      {rank === 2 && <Medal size={22} className="text-gray-400 mb-2" />}
-      {rank === 3 && <Medal size={22} className="text-orange-500 mb-2" />}
+      {rank === 1 && <Crown size={20} className={`${crownSize} text-yellow-500 mb-1 sm:mb-2`} />}
+      {rank === 2 && <Medal size={16} className={`${crownSize} text-gray-400 mb-1 sm:mb-2`} />}
+      {rank === 3 && <Medal size={16} className={`${crownSize} text-orange-500 mb-1 sm:mb-2`} />}
 
       {/* Avatar */}
       <Link to={`/profile/${member.user.handle}`}>
         <img
           src={member.user.avatar_url}
           alt={member.user.display_name}
-          className={`${avatarSize} rounded-full ${borderSize} mb-3 hover:scale-105 transition-transform ${
+          className={`${avatarSize} rounded-full ${borderSize} mb-2 sm:mb-3 hover:scale-105 transition-transform ${
             rank === 1 ? 'border-yellow-500/40' : rank === 2 ? 'border-gray-400/40' : 'border-orange-500/40'
           }`}
         />
@@ -42,14 +43,14 @@ function PodiumCard({ member, rank, onVote, currentUserId }: { member: Leaderboa
 
       {/* Name */}
       <Link to={`/profile/${member.user.handle}`} className="hover:opacity-80 transition-opacity">
-        <p className="font-semibold text-white text-sm truncate max-w-[140px]">{member.user.display_name}</p>
-        <p className="text-xs text-gray-500 truncate max-w-[140px]">@{member.user.handle}</p>
+        <p className="font-semibold text-white text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[140px]">{member.user.display_name}</p>
+        <p className="text-xs text-gray-500 truncate max-w-[100px] sm:max-w-[140px]">@{member.user.handle}</p>
       </Link>
 
       {/* Vote count */}
-      <div className="mt-3 flex items-center gap-1.5">
-        <span className={`text-2xl font-bold ${rankColor}`}>{member.vote_count}</span>
-        <ThumbsUp size={14} className="text-gray-500" />
+      <div className="mt-2 sm:mt-3 flex items-center gap-1">
+        <span className={`text-lg sm:text-2xl font-bold ${rankColor}`}>{member.vote_count}</span>
+        <ThumbsUp size={12} className="sm:size-14 text-gray-500" />
       </div>
 
       {/* Vote button */}
@@ -57,7 +58,7 @@ function PodiumCard({ member, rank, onVote, currentUserId }: { member: Leaderboa
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(member.user._id)}
-          className={`mt-3 w-full py-2 rounded-lg text-xs font-medium transition-all ${
+          className={`mt-2 sm:mt-3 w-full py-1.5 sm:py-2 rounded-lg text-xs font-medium transition-all ${
             member.is_voted
               ? 'bg-green-900/30 text-green-400 border border-green-800'
               : 'bg-white/5 text-gray-300 border border-white/10 hover:bg-white/10'
@@ -205,14 +206,14 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <div className="h-6 w-24 bg-[#2A2A2A] rounded mb-6" />
-          <div className="flex items-start gap-4">
-            <div className="h-16 w-16 bg-[#2A2A2A] rounded-xl" />
-            <div className="space-y-3">
-              <div className="h-10 w-48 bg-[#2A2A2A] rounded" />
-              <div className="h-4 w-32 bg-[#2A2A2A] rounded" />
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
+        <div className="mb-6 sm:mb-8">
+          <div className="h-6 w-24 bg-[#2A2A2A] rounded mb-4 sm:mb-6" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="h-12 w-12 sm:h-16 sm:w-16 bg-[#2A2A2A] rounded-xl" />
+            <div className="space-y-2 sm:space-y-3">
+              <div className="h-8 sm:h-10 w-36 sm:w-48 bg-[#2A2A2A] rounded" />
+              <div className="h-4 w-28 sm:w-32 bg-[#2A2A2A] rounded" />
             </div>
           </div>
         </div>
@@ -224,8 +225,8 @@ export default function LeaderboardPage() {
   if (!category) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1A1A1A] border border-[#333]">
-          <Trophy size={28} className="text-gray-600" />
+        <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-[#1A1A1A] border border-[#333]">
+          <Trophy size={24} className="sm:size-28 text-gray-600" />
         </div>
         <p className="text-gray-400">Category not found.</p>
         <button
@@ -242,15 +243,15 @@ export default function LeaderboardPage() {
   const rest = members.slice(3);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-3 py-6 sm:py-12 sm:px-6 lg:px-8">
       {/* Back button */}
       <motion.button
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={() => navigate('/categories')}
-        className="mb-8 flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-white"
+        className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-400 transition-colors hover:text-white"
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft size={14} className="sm:size-16" />
         All Categories
       </motion.button>
 
@@ -258,29 +259,29 @@ export default function LeaderboardPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between"
+        className="mb-8 sm:mb-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 sm:gap-4">
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="flex h-16 w-16 items-center justify-center rounded-xl border border-[#333] bg-[#1A1A1A]"
+            className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl border border-[#333] bg-[#1A1A1A]"
           >
-            <Icon name={category.icon} size={32} className="text-white" />
+            <Icon name={category.icon} size={24} className="sm:size-32 text-white" />
           </motion.div>
           <div>
-            <h1 className="text-page-heading text-white">{category.name}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-400">
-              <span className="flex items-center gap-1.5 bg-[#1A1A1A] border border-[#333] rounded-lg px-3 py-1.5">
-                <Users size={14} />
-                {category.member_count} members
+            <h1 className="text-xl sm:text-page-heading text-white">{category.name}</h1>
+            <div className="mt-1.5 sm:mt-2 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
+              <span className="flex items-center gap-1 bg-[#1A1A1A] border border-[#333] rounded-lg px-2 sm:px-3 py-1">
+                <Users size={12} className="sm:size-14" />
+                {category.member_count}
               </span>
-              <span className="flex items-center gap-1.5 bg-[#1A1A1A] border border-[#333] rounded-lg px-3 py-1.5">
-                <BarChart3 size={14} />
-                {category.total_votes.toLocaleString()} votes
+              <span className="flex items-center gap-1 bg-[#1A1A1A] border border-[#333] rounded-lg px-2 sm:px-3 py-1">
+                <BarChart3 size={12} className="sm:size-14" />
+                {category.total_votes.toLocaleString()}
               </span>
             </div>
             {category.description && (
-              <p className="mt-3 max-w-2xl text-sm text-gray-400 leading-relaxed">
+              <p className="mt-2 sm:mt-3 max-w-2xl text-xs sm:text-sm text-gray-400 leading-relaxed">
                 {category.description}
               </p>
             )}
@@ -293,22 +294,22 @@ export default function LeaderboardPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setApplyModal(true)}
-              className="btn-primary py-3 px-6"
+              className="btn-primary py-2 sm:py-3 px-4 sm:px-6 text-xs sm:text-sm"
             >
-              <UserPlus size={18} />
-              Apply to Join
+              <UserPlus size={16} className="sm:size-18" />
+              Apply
             </motion.button>
           )}
 
           {userMembership === 'pending' && (
-            <div className="inline-flex items-center gap-2 rounded-lg bg-orange-900/30 border border-orange-800 px-6 py-3 text-sm font-medium text-orange-400">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-orange-900/30 border border-orange-800 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium text-orange-400">
               <div className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
-              Application Pending
+              Pending
             </div>
           )}
 
           {userMembership === 'approved' && (
-            <div className="inline-flex items-center gap-2 rounded-lg bg-green-900/30 border border-green-800 px-6 py-3 text-sm font-medium text-green-400">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-green-900/30 border border-green-800 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium text-green-400">
               <div className="h-2 w-2 rounded-full bg-green-400" />
               Member
             </div>
@@ -322,9 +323,9 @@ export default function LeaderboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-10"
+          className="mb-8 sm:mb-10"
         >
-          <div className="grid gap-4 grid-cols-3 max-w-2xl mx-auto">
+          <div className="grid gap-2 sm:gap-4 grid-cols-3 max-w-2xl mx-auto">
             {/* 2nd place */}
             <PodiumCard member={top3[1]} rank={2} onVote={handleVote} currentUserId={user?._id} />
             {/* 1st place */}
@@ -340,7 +341,6 @@ export default function LeaderboardPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
           className="card overflow-hidden"
         >
           <div className="overflow-x-auto">
