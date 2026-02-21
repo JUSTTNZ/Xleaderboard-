@@ -82,6 +82,9 @@ export default function LeaderboardPage() {
   const [applyModal, setApplyModal] = useState(false);
   const [applyReason, setApplyReason] = useState('');
   const [applying, setApplying] = useState(false);
+  const [showSwitchWarning, setShowSwitchWarning] = useState(false);
+  const [currentMembership, setCurrentMembership] = useState<{ name: string; slug: string; votes: number; rank: number | null } | null>(null);
+  const [confirmText, setConfirmText] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -155,14 +158,46 @@ export default function LeaderboardPage() {
 
     setApplying(true);
     try {
-      await api.post(`/categories/${slug}/apply`, { reason: applyReason });
-      setUserMembership('pending');
-      setApplyModal(false);
-      setApplyReason('');
-      toast('success', 'Application submitted! We\'ll review it soon.');
-    } catch (error) {
-      console.error('Apply failed:', error);
-      toast('error', 'Failed to submit application.');
+      const { data } = await api.post(`/categories/${slug}/apply`, { reason: applyReason });
+      if (data.success) {
+        toast('success', data.message);
+        setApplyModal(false);
+        setApplyReason('');
+        fetchData();
+      }
+    } catch (error: any) {
+      if (error.response?.data?.requiresConfirmation) {
+        // User is already in another category - show switch warning
+        setCurrentMembership(error.response.data.currentCategory);
+        setShowSwitchWarning(true);
+        setApplyModal(false);
+      } else {
+        toast('error', error.response?.data?.error || error.response?.data?.message || 'Failed to submit application.');
+      }
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleConfirmSwitch = async () => {
+    setApplying(true);
+    try {
+      const { data } = await api.post(`/categories/${slug}/apply/confirm-switch`, {
+        reason: applyReason,
+        confirmForfeit: true,
+      });
+      if (data.success) {
+        toast('success', data.message);
+        if (data.oldVotesLost > 0) {
+          toast('info', `You lost ${data.oldVotesLost} votes from your previous category`);
+        }
+        setShowSwitchWarning(false);
+        setApplyReason('');
+        setConfirmText('');
+        fetchData();
+      }
+    } catch (error: any) {
+      toast('error', error.response?.data?.error || 'Failed to switch category');
     } finally {
       setApplying(false);
     }
@@ -384,10 +419,6 @@ export default function LeaderboardPage() {
                 Tell us why you belong in this category (20-200 characters).
               </p>
 
-              <div className="mb-4 rounded-lg bg-orange-900/15 border border-orange-800/30 p-3 text-xs text-orange-400">
-                <strong>Note:</strong> You can only be in one category at a time. Applying here will forfeit any votes you've received in your current category.
-              </div>
-
               <textarea
                 value={applyReason}
                 onChange={(e) => setApplyReason(e.target.value)}
@@ -419,6 +450,106 @@ export default function LeaderboardPage() {
                   className="btn-primary flex-1 py-2.5 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {applying ? 'Submitting...' : 'Submit Application'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Switch Category Warning Modal */}
+      <AnimatePresence>
+        {showSwitchWarning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+            onClick={() => { setShowSwitchWarning(false); setConfirmText(''); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="bg-[#1A1A1A] border border-red-800 rounded-xl max-w-lg w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-4 mb-6">
+                <div className="p-3 bg-red-900/30 rounded-lg flex-shrink-0">
+                  <AlertTriangle className="w-8 h-8 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-red-400 mb-2">
+                    Warning: You Will Lose All Votes
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    You are currently in <span className="font-semibold text-white">
+                      {currentMembership?.name}
+                    </span> with <span className="font-semibold text-white">
+                      {currentMembership?.votes} votes
+                    </span>{currentMembership?.rank ? ` (Rank #${currentMembership.rank})` : ''}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-red-400 mb-2 flex items-center gap-2">
+                  <Ban className="w-5 h-5" />
+                  What happens if you switch:
+                </h4>
+                <ul className="space-y-2 text-sm text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span>You will be <strong>removed</strong> from &quot;{currentMembership?.name}&quot;</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span>All <strong>{currentMembership?.votes} votes</strong> you received will be deleted</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span>Your rank will be <strong>lost forever</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>You will join &quot;{category?.name}&quot; with <strong>0 votes</strong></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-[#0A0A0A] border border-[#333] rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-400 mb-2">
+                  Are you absolutely sure you want to switch categories?
+                </p>
+                <p className="text-xs text-gray-500">
+                  This action cannot be undone. Type <span className="font-mono text-white">CONFIRM</span> to continue.
+                </p>
+                <input
+                  type="text"
+                  placeholder="Type CONFIRM"
+                  value={confirmText}
+                  className="w-full mt-3 px-4 py-2 bg-[#1A1A1A] border border-[#333] rounded-lg text-white text-sm focus:outline-none focus:border-red-800"
+                  onChange={(e) => setConfirmText(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowSwitchWarning(false);
+                    setConfirmText('');
+                  }}
+                  className="flex-1 px-4 py-2.5 border border-gray-700 rounded-lg hover:bg-[#2A2A2A] text-gray-300 text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmSwitch}
+                  disabled={confirmText !== 'CONFIRM' || applying}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                >
+                  {applying ? 'Switching...' : 'Switch Category & Lose Votes'}
                 </button>
               </div>
             </motion.div>

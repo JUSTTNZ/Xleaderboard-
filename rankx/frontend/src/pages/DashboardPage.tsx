@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { BarChart3, FolderOpen, Trophy, Vote, TrendingUp, TrendingDown, Minus, Clock, ArrowRight, Sparkles, Shield, Settings, type LucideIcon } from 'lucide-react';
+import { BarChart3, FolderOpen, Trophy, Vote, TrendingUp, TrendingDown, Minus, Clock, ArrowRight, Sparkles, Shield, Settings, Info, type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
@@ -146,6 +146,29 @@ export default function DashboardPage() {
                   </motion.div>
                 ))}
               </div>
+
+              {/* One Category Limit Banner */}
+              {dashboard.rankings.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="mb-8 rounded-xl bg-blue-900/20 border border-blue-800 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-blue-400 mb-1">
+                        One Category Limit
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        You are currently in <strong>{dashboard.rankings[0].category.name}</strong>.
+                        To switch to another category, you must forfeit all {dashboard.rankings[0].vote_count} votes and start from 0.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Two-column layout */}
               <div className="grid gap-8 lg:grid-cols-3">
