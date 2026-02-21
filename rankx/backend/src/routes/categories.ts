@@ -67,77 +67,135 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
 router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request, res: Response): Promise<void> => {
   try {
     const optReq = req as OptionalAuthRequest;
+    const { slug } = req.params;
+
+    console.log(`[Category] Fetching category: ${slug}`);
 
     // First try without is_active filter to find the category regardless of status
-    let category = await Category.findOne({ slug: req.params.slug });
+    let category = await Category.findOne({ slug });
+    
     if (!category) {
-      console.log(`Category "${req.params.slug}" not found in database at all.`);
+      console.log(`Category "${slug}" not found in database at all.`);
       res.status(404).json({ error: 'Category not found' });
       return;
     }
 
     // If category is inactive, reactivate it
     if (!category.is_active) {
-      console.log(`Category "${req.params.slug}" exists but is_active=${category.is_active}. Reactivating.`);
+      console.log(`Category "${slug}" exists but is_active=${category.is_active}. Reactivating.`);
       category.is_active = true;
       await category.save();
     }
 
-    const membersRaw = await CategoryMember.find({
-      category: category._id,
-      status: 'approved',
-    })
-      .sort({ vote_count: -1 })
-      .populate('user', 'handle display_name avatar_url bio followers_count') as unknown as ICategoryMemberPopulatedUser[];
+    console.log(`[Category] Found category: ${category.name}, fetching members`);
 
-    // Filter out orphaned members (user was deleted but membership remains)
-    const members = membersRaw.filter((m) => m.user != null);
+    // Fetch members with error handling
+    let membersRaw: ICategoryMemberPopulatedUser[] = [];
+    try {
+      const foundMembers = await CategoryMember.find({
+        category: category._id,
+        status: 'approved',
+      })
+        .sort({ vote_count: -1 })
+        .populate('user', 'handle display_name avatar_url bio followers_count') as unknown as ICategoryMemberPopulatedUser[];
+      membersRaw = foundMembers;
+    } catch (populateError) {
+      console.error('[Category] Error populating members:', populateError);
+      
+      // Return early with empty members if population fails
+      res.json({
+        success: true,
+        category: category.toObject(),
+        members: [],
+        total_members: 0,
+        user_vote: null,
+        user_membership: null,
+      });
+      return;
+    }
+
+    // Filter out orphaned members (user was deleted but membership remains) with explicit null checks
+    const members = membersRaw.filter((m): m is ICategoryMemberPopulatedUser => {
+      return m.user != null && typeof m.user === 'object' && '_id' in m.user;
+    });
 
     // Clean up orphaned memberships in the background
-    if (members.length < membersRaw.length) {
-      const orphanedIds = membersRaw.filter((m) => m.user == null).map((m) => m._id);
-      console.log(`Cleaning up ${orphanedIds.length} orphaned memberships in category "${category.slug}"`);
+    const orphanedCount = membersRaw.length - members.length;
+    if (orphanedCount > 0) {
+      const orphanedIds = membersRaw
+        .filter((m) => !m.user || typeof m.user !== 'object' || !('_id' in m.user))
+        .map((m) => m._id);
+      console.log(`[Category] Cleaning up ${orphanedIds.length} orphaned memberships in category "${slug}"`);
       CategoryMember.deleteMany({ _id: { $in: orphanedIds } }).catch((err: unknown) =>
-        console.error('Failed to clean orphaned memberships:', err)
+        console.error('[Category] Failed to clean orphaned memberships:', err)
       );
     }
 
+    console.log(`[Category] Building leaderboard with ${members.length} valid members`);
+
+    // Get user vote and membership with error handling
     let userVote: string | null = null;
     let userMembership: Awaited<ReturnType<typeof CategoryMember.findOne>> = null;
+    
     if (optReq.user) {
-      const vote = await Vote.findOne({
-        voter: optReq.user._id,
-        category: category._id,
-      });
-      userVote = vote ? vote.voted_for.toString() : null;
+      try {
+        const vote = await Vote.findOne({
+          voter: optReq.user._id,
+          category: category._id,
+        });
+        userVote = vote ? vote.voted_for.toString() : null;
 
-      userMembership = await CategoryMember.findOne({
-        category: category._id,
-        user: optReq.user._id,
-      });
+        userMembership = await CategoryMember.findOne({
+          category: category._id,
+          user: optReq.user._id,
+        });
+      } catch (voteError) {
+        console.error('[Category] Error fetching user vote/membership:', voteError);
+        // Continue without vote data
+      }
     }
 
-    const leaderboard: LeaderboardEntry[] = members.map((member, index) => {
-      let rank = index + 1;
-      if (index > 0 && member.vote_count === members[index - 1].vote_count) {
-        rank = leaderboard[index - 1]?.rank || index + 1;
+    // Build leaderboard with explicit error handling
+    const leaderboard: LeaderboardEntry[] = [];
+    for (let index = 0; index < members.length; index++) {
+      try {
+        const member = members[index];
+        
+        // Skip if user is still somehow null after our filter
+        if (!member.user || !('handle' in member.user)) {
+          console.warn(`[Category] Skipping member at index ${index} due to invalid user data`);
+          continue;
+        }
+
+        let rank = index + 1;
+        if (index > 0 && member.vote_count === members[index - 1].vote_count) {
+          rank = leaderboard[index - 1]?.rank || index + 1;
+        }
+
+        const userId = member.user._id.toString();
+        
+        leaderboard.push({
+          rank,
+          user: {
+            _id: member.user._id,
+            handle: member.user.handle || '',
+            display_name: member.user.display_name || '',
+            avatar_url: member.user.avatar_url || '',
+            bio: member.user.bio || '',
+            followers_count: member.user.followers_count || 0,
+          },
+          vote_count: member.vote_count || 0,
+          rank_change: member.rank_change || 0,
+          is_voted: userVote === userId,
+          is_self: optReq.user ? optReq.user._id.toString() === userId : false,
+        });
+      } catch (memberError) {
+        console.error(`[Category] Error processing member at index ${index}:`, memberError);
+        // Skip this member and continue
       }
-      return {
-        rank,
-        user: {
-          _id: member.user._id,
-          handle: member.user.handle,
-          display_name: member.user.display_name,
-          avatar_url: member.user.avatar_url,
-          bio: member.user.bio,
-          followers_count: member.user.followers_count,
-        },
-        vote_count: member.vote_count,
-        rank_change: member.rank_change,
-        is_voted: userVote === member.user._id.toString(),
-        is_self: optReq.user ? optReq.user._id.toString() === member.user._id.toString() : false,
-      };
-    });
+    }
+
+    console.log(`[Category] Successfully built leaderboard with ${leaderboard.length} entries`);
 
     res.json({
       success: true,
@@ -148,8 +206,10 @@ router.get('/:slug', optionalAuth as express.RequestHandler, async (req: Request
       user_membership: userMembership ? userMembership.status : null,
     });
   } catch (error) {
-    console.error('Category detail error:', error);
-    res.status(500).json({ error: 'Failed to fetch category' });
+    console.error('[Category] Category detail error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Category] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    res.status(500).json({ error: 'Failed to fetch category', details: message });
   }
 });
 
